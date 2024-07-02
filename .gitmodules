@@ -4,3 +4,6 @@
 [submodule "Atentificador"]
 	path = Atentificador
 	url = https://github.com/AlbertoSMC72/hydrosense-authenticator-server.git
+[submodule "CreadorInfo"]
+	path = CreadorInfo
+	url = https://github.com/AlbertoSMC72/hydrosense-creator-server.git
