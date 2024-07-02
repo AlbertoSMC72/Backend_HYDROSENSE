@@ -1,3 +1,6 @@
 [submodule "Consumidor"]
 	path = Consumidor
 	url = https://github.com/AlbertoSMC72/consumer-RabbitMQ-payment.git
+[submodule "Atentificador"]
+	path = Atentificador
+	url = https://github.com/AlbertoSMC72/hydrosense-authenticator-server.git
