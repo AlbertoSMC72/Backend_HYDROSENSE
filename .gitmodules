@@ -1,0 +1,3 @@
+[submodule "path/to/Consumidor"]
+	path = path/to/Consumidor
+	url = https://github.com/AlbertoSMC72/consumer-RabbitMQ-payment.git
