@@ -7,3 +7,6 @@
 [submodule "CreadorInfo"]
 	path = CreadorInfo
 	url = https://github.com/AlbertoSMC72/hydrosense-creator-server.git
+[submodule "CreadorMotores"]
+	path = CreadorMotores
+	url = https://github.com/AlbertoSMC72/Server_PostMotors.git
