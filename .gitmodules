@@ -10,3 +10,6 @@
 [submodule "CreadorMotores"]
 	path = CreadorMotores
 	url = https://github.com/AlbertoSMC72/Server_PostMotors.git
+[submodule "HydroSence-petitions"]
+	path = HydroSence-petitions
+	url = https://github.com/0511Cynthia/HydroSence-petitions.git
