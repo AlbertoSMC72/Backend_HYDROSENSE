@@ -13,3 +13,6 @@
 [submodule "HydroSence-petitions"]
 	path = HydroSence-petitions
 	url = https://github.com/0511Cynthia/HydroSence-petitions.git
+[submodule "ws_hydrosense"]
+	path = ws_hydrosense
+	url = https://github.com/AlbertoSMC72/ws_hydrosense.git
