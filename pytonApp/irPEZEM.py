@@ -44,8 +44,7 @@ def generate_report(title, description, data):
         'title': title,
         'description': description,
         'date': datetime.datetime.now().isoformat(),
-        'data': data,
-        "engine_ref_data": 1
+        'data': data
     }
     reports.append(report)
     message = json.dumps(report)
@@ -59,11 +58,6 @@ ser = serial.Serial(serial_port, baud_rate)
 accel_x = []
 accel_y = []
 accel_z = []
-
-# Umbrales para detección
-THRESHOLD_HIGH_VIBRATION = 50
-THRESHOLD_WATER_HAMMER_FLOW_DROP = 10
-THRESHOLD_WATER_HAMMER_VIBRATION_PEAK = 100
 
 while True:
     try:
@@ -111,7 +105,12 @@ while True:
                 'total_liters': data.get('total_liters', None),
                 'vibration_x': data.get('vibration_x', None),
                 'vibration_y': data.get('vibration_y', None),
-                'vibration_z': data.get('vibration_z', None)
+                'vibration_z': data.get('vibration_z', None),
+                'voltage': data.get('voltage', None),
+                'current': data.get('current', None),
+                'power': data.get('power', None),
+                'energy': data.get('energy', None),
+                'frequency': data.get('frequency', None)
             },
             "engine_ref_data": 1
         }
@@ -129,75 +128,40 @@ while True:
                     'temperature': data.get('temperature', None),
                     'flow_rate': data.get('flow_rate', None),
                     'total_liters': data.get('total_liters', None),
-                    'acceleration_x': accel_x.copy(),
-                    'acceleration_y': accel_y.copy(),
-                    'acceleration_z': accel_z.copy()
+                    'vibration_x': data.get('vibration_x', None),
+                    'vibration_y': data.get('vibration_y', None),
+                    'vibration_z': data.get('vibration_z', None)
                 }
             )
         
-        if data.get('vibration_x', 0) > THRESHOLD_HIGH_VIBRATION or data.get('vibration_y', 0) > THRESHOLD_HIGH_VIBRATION or data.get('vibration_z', 0) > THRESHOLD_HIGH_VIBRATION:
-            generate_report(
-                title="Alerta de alta vibración",
-                description="Se detectó una alta vibración en la bomba de agua.",
-                data={
-                    'temperature': data.get('temperature', None),
-                    'flow_rate': data.get('flow_rate', None),
-                    'total_liters': data.get('total_liters', None),
-                    'vibration_x': data.get('vibration_x', None),
-                    'vibration_y': data.get('vibration_y', None),
-                    'vibration_z': data.get('vibration_z', None)
-                }
-            )
-
-        if data.get('temperature', None) < 5:
-            generate_report(
-                title="Alerta de baja temperatura",
-                description="La temperatura de la bomba de agua es muy baja.",
-                data={
-                    'temperature': data.get('temperature', None),
-                    'flow_rate': data.get('flow_rate', None),
-                    'total_liters': data.get('total_liters', None)
-                }
-            )
-
-        if data.get('flow_rate', None) > 100:
-            generate_report(
-                title="Alerta de flujo de agua alto",
-                description="El flujo de agua es demasiado alto.",
-                data={
-                    'temperature': data.get('temperature', None),
-                    'flow_rate': data.get('flow_rate', None),
-                    'total_liters': data.get('total_liters', None)
-                }
-            )
-
-        # Golpe de ariete
-        if 'flow_rate' in data and data['flow_rate'] < THRESHOLD_WATER_HAMMER_FLOW_DROP and \
-            (data.get('vibration_x', 0) > THRESHOLD_WATER_HAMMER_VIBRATION_PEAK or
-             data.get('vibration_y', 0) > THRESHOLD_WATER_HAMMER_VIBRATION_PEAK or
-             data.get('vibration_z', 0) > THRESHOLD_WATER_HAMMER_VIBRATION_PEAK):
+        # Golpe de Ariete
+        if 'flow_rate' in data and data['flow_rate'] < 0.1 and \
+            (data.get('vibration_x', 0) > 10 or
+             data.get('vibration_y', 0) > 10 or
+             data.get('vibration_z', 0) > 10):
             generate_report(
                 title="Alerta de golpe de ariete",
                 description="Se detectó un golpe de ariete en la bomba de agua.",
-                data={
-                    'temperature': data.get('temperature', None),
-                    'flow_rate': data.get('flow_rate', None),
-                    'total_liters': data.get('total_liters', None),
-                    'vibration_x': data.get('vibration_x', None),
-                    'vibration_y': data.get('vibration_y', None),
-                    'vibration_z': data.get('vibration_z', None)
-                }
+                data=data
             )
-
-        # Desalineamiento del motor
+        
+        # Flujo de Agua Cortado y Vibración Detectada
+        if data.get('flow_rate', 1) == 0 and \
+            (data.get('vibration_x', 0) > 10 or
+             data.get('vibration_y', 0) > 10 or
+             data.get('vibration_z', 0) > 10):
+            generate_report(
+                title="Alerta de flujo cortado con vibración",
+                description="El flujo de agua se ha cortado y se detectaron vibraciones.",
+                data=data
+            )
+        
+        # Desalineamiento del Motor
         if len(accel_x) == 100:
-            fft_x = fft(accel_x)
-            fft_y = fft(accel_y)
-            fft_z = fft(accel_z)
             freqs_x = np.abs(fft_x)
             freqs_y = np.abs(fft_y)
             freqs_z = np.abs(fft_z)
-            if np.any(freqs_x[1:] > THRESHOLD_HIGH_VIBRATION) or np.any(freqs_y[1:] > THRESHOLD_HIGH_VIBRATION) or np.any(freqs_z[1:] > THRESHOLD_HIGH_VIBRATION):
+            if np.any(freqs_x[1:] > 10) or np.any(freqs_y[1:] > 10) or np.any(freqs_z[1:] > 10):
                 generate_report(
                     title="Alerta de desalineamiento del motor",
                     description="Se detectó un posible desalineamiento del motor basado en las vibraciones.",
@@ -225,7 +189,7 @@ while True:
                     'vibration_z': data.get('vibration_z', None)
                 }
             )
-
+        
         # Engranaje del rotor
         if 'acceleration_x' in data and np.std(accel_x) > 10:
             generate_report(
@@ -241,6 +205,89 @@ while True:
                 }
             )
 
+        # Sobretensión
+        if 'voltage' in data and data['voltage'] > 240:
+            generate_report(
+                title="Alerta de sobretensión",
+                description="El voltaje ha superado el umbral seguro.",
+                data={
+                    'voltage': data['voltage'],
+                    'current': data.get('current', None),
+                    'power': data.get('power', None),
+                    'energy': data.get('energy', None),
+                    'frequency': data.get('frequency', None)
+                }
+            )
+
+        # Baja Tensión
+        if 'voltage' in data and data['voltage'] < 180:
+            generate_report(
+                title="Alerta de baja tensión",
+                description="El voltaje ha caído por debajo del umbral seguro.",
+                data={
+                    'voltage': data['voltage'],
+                    'current': data.get('current', None),
+                    'power': data.get('power', None),
+                    'energy': data.get('energy', None),
+                    'frequency': data.get('frequency', None)
+                }
+            )
+        
+        # Sobrecorriente
+        if 'current' in data and data['current'] > 10:
+            generate_report(
+                title="Alerta de sobrecorriente",
+                description="La corriente ha superado el umbral seguro.",
+                data={
+                    'voltage': data.get('voltage', None),
+                    'current': data['current'],
+                    'power': data.get('power', None),
+                    'energy': data.get('energy', None),
+                    'frequency': data.get('frequency', None)
+                }
+            )
+
+        # Sobrepotencia
+        if 'power' in data and data['power'] > 2000:
+            generate_report(
+                title="Alerta de sobrepotencia",
+                description="La potencia activa ha superado el umbral seguro.",
+                data={
+                    'voltage': data.get('voltage', None),
+                    'current': data.get('current', None),
+                    'power': data['power'],
+                    'energy': data.get('energy', None),
+                    'frequency': data.get('frequency', None)
+                }
+            )
+        
+        # Frecuencia Anormal
+        if 'frequency' in data and (data['frequency'] < 49 or data['frequency'] > 51):
+            generate_report(
+                title="Alerta de frecuencia anormal",
+                description="La frecuencia está fuera del rango esperado.",
+                data={
+                    'voltage': data.get('voltage', None),
+                    'current': data.get('current', None),
+                    'power': data.get('power', None),
+                    'energy': data.get('energy', None),
+                    'frequency': data['frequency']
+                }
+            )
+        
+        # Consumo de Energía Alto
+        if 'energy' in data and data['energy'] > 10000:
+            generate_report(
+                title="Alerta de consumo de energía alto",
+                description="El consumo de energía ha superado el umbral esperado.",
+                data={
+                    'voltage': data.get('voltage', None),
+                    'current': data.get('current', None),
+                    'power': data.get('power', None),
+                    'energy': data['energy'],
+                    'frequency': data.get('frequency', None)
+                }
+            )
 
     except Exception as e:
         print(f"Error: {e}")
